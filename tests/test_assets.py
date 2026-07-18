@@ -231,3 +231,20 @@ def test_asset_api_checkout_and_return_flow(tmp_path, monkeypatch):
         assert end_response.status_code == 200
         assert end_response.json()["summary"]["assets_checked_out"] == 1
         assert end_response.json()["summary"]["assets_returned"] == 1
+
+
+def test_terminal_ui_exposes_asset_checkout_and_return_controls(
+    isolated_database,
+):
+    from fastapi.testclient import TestClient
+
+    with TestClient(app.app) as client:
+        response = client.get("/")
+
+    assert response.status_code == 200
+    page = response.text
+    assert 'data-workspace="checkout"' in page
+    assert 'data-workspace="return"' in page
+    assert 'id="checkoutLookupForm"' in page
+    assert 'id="returnLookupForm"' in page
+    assert "ECE-METER-001" in page

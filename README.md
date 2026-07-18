@@ -146,3 +146,13 @@ Only an `AVAILABLE` asset can be checked out. Only a `CHECKED_OUT` asset can be 
 - Stock quantities are seeded demo values and are not yet connected to load cells.
 - The checkout and return terminal screens are not yet implemented.
 - Administrative asset editing and status management are not yet implemented.
+
+## Phase 1.1 terminal workflow
+
+The terminal now includes three session workspaces:
+
+1. **Search inventory** for consumables and general item locations.
+2. **Check out equipment** by scanning an individual asset tag and confirming an available asset.
+3. **Return equipment** by scanning an asset tag and confirming a currently checked-out asset.
+
+For an end-to-end demo, sign in with `CARD-0001`, check out `ECE-METER-001`, switch to the return workspace, return the same tag, and end the session. The session summary and development event log will show both actions.

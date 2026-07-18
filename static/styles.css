@@ -140,3 +140,125 @@ input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(35, 86, 1
     .timeout-box { min-width: 0; }
     .item-top { flex-direction: column; }
 }
+
+/* Phase 1.1 asset checkout and return workspaces */
+.workspace-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 22px;
+}
+.workspace-tab {
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 14px;
+    color: #344054;
+    background: rgba(255, 255, 255, .78);
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(23, 32, 51, .05);
+}
+.workspace-tab:hover { border-color: #98a9bd; background: white; }
+.workspace-tab.active {
+    color: white;
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: 0 12px 24px rgba(35, 86, 168, .22);
+}
+.tab-number {
+    width: 28px;
+    height: 28px;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: var(--primary);
+    background: #e9f0fb;
+    font-size: .8rem;
+}
+.workspace-tab.active .tab-number { color: var(--primary-dark); background: white; }
+.workspace-panel { min-height: 520px; }
+.asset-scan-form { margin-top: 26px; }
+.asset-scan-form label { display: block; margin-bottom: 8px; font-weight: 800; }
+.asset-demo-tags { justify-content: flex-start; margin-top: 12px; }
+.asset-result { margin-top: 20px; }
+.error-message { color: var(--danger); }
+.asset-card {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 22px;
+    background: white;
+    box-shadow: 0 10px 26px rgba(23, 32, 51, .06);
+}
+.asset-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+.asset-card h3 { margin: 4px 0 5px; font-size: 1.35rem; }
+.asset-status {
+    display: inline-flex;
+    min-height: 31px;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: .76rem;
+    font-weight: 900;
+    letter-spacing: .03em;
+    white-space: nowrap;
+}
+.asset-status.available { color: var(--success); background: #ecfdf3; }
+.asset-status.checked-out { color: #175cd3; background: #eff8ff; }
+.asset-status.maintenance { color: var(--warning); background: #fffaeb; }
+.asset-status.missing, .asset-status.retired { color: var(--danger); background: var(--danger-soft); }
+.asset-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0;
+}
+.asset-details div {
+    min-height: 70px;
+    border: 1px solid #e5eaf0;
+    border-radius: 12px;
+    padding: 11px 13px;
+    background: var(--surface-soft);
+}
+.asset-details dt { margin-bottom: 5px; color: var(--muted); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.asset-details dd { margin: 0; color: #344054; font-weight: 750; line-height: 1.35; }
+.asset-note { padding: 11px 13px; border-radius: 11px; color: var(--warning); background: #fffaeb; border: 1px solid #fedf89; }
+.asset-decision { margin-top: 16px; border-radius: 12px; padding: 13px 15px; font-weight: 750; }
+.asset-decision.allowed { color: var(--success); background: #ecfdf3; border: 1px solid #abefc6; }
+.asset-decision.blocked { color: var(--danger); background: var(--danger-soft); border: 1px solid #fecdca; }
+.asset-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.asset-success {
+    margin-bottom: 14px;
+    border: 1px solid #abefc6;
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--success);
+    background: #ecfdf3;
+}
+.asset-error-card {
+    display: grid;
+    gap: 4px;
+    border: 1px solid #fecdca;
+    border-radius: 14px;
+    padding: 18px;
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+.asset-error-card span { color: #912018; }
+
+@media (max-width: 760px) {
+    .workspace-tabs { grid-template-columns: 1fr; }
+    .workspace-tab { justify-content: flex-start; }
+    .asset-card-header { flex-direction: column; }
+    .asset-details { grid-template-columns: 1fr; }
+}

@@ -57,22 +57,87 @@
                     </div>
                 </div>
 
+                <nav class="workspace-tabs" aria-label="Terminal actions">
+                    <button class="workspace-tab active" type="button" data-workspace="inventory">
+                        <span class="tab-number">1</span>
+                        Search inventory
+                    </button>
+                    <button class="workspace-tab" type="button" data-workspace="checkout">
+                        <span class="tab-number">2</span>
+                        Check out equipment
+                    </button>
+                    <button class="workspace-tab" type="button" data-workspace="return">
+                        <span class="tab-number">3</span>
+                        Return equipment
+                    </button>
+                </nav>
+
                 <div class="terminal-grid">
                     <section class="workspace-card">
-                        <div class="section-heading">
-                            <div>
-                                <p class="eyebrow">Inventory lookup</p>
-                                <h2>Find a part or piece of equipment</h2>
+                        <div id="inventoryWorkspace" class="workspace-panel">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Inventory lookup</p>
+                                    <h2>Find a part or piece of equipment</h2>
+                                </div>
                             </div>
+
+                            <form id="searchForm" class="search-form">
+                                <input id="searchInput" autocomplete="off" placeholder="Search 10k resistor, Arduino, multimeter, Shelf B…">
+                                <button type="submit" class="button button-primary">Search</button>
+                            </form>
+
+                            <div id="searchSummary" class="search-summary"></div>
+                            <div id="results" class="results"></div>
                         </div>
 
-                        <form id="searchForm" class="search-form">
-                            <input id="searchInput" autocomplete="off" placeholder="Search 10k resistor, Arduino, multimeter, Shelf B…">
-                            <button type="submit" class="button button-primary">Search</button>
-                        </form>
+                        <div id="checkoutWorkspace" class="workspace-panel hidden">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Returnable assets</p>
+                                    <h2>Check out equipment</h2>
+                                    <p class="muted">Scan the unique tag attached to the physical asset.</p>
+                                </div>
+                            </div>
 
-                        <div id="searchSummary" class="search-summary"></div>
-                        <div id="results" class="results"></div>
+                            <form id="checkoutLookupForm" class="asset-scan-form">
+                                <label for="checkoutTagInput">Asset tag</label>
+                                <div class="input-row">
+                                    <input id="checkoutTagInput" autocomplete="off" spellcheck="false" placeholder="ECE-METER-001">
+                                    <button type="submit" class="button button-primary">Look up asset</button>
+                                </div>
+                            </form>
+                            <div class="demo-cards asset-demo-tags" aria-label="Demo checkout tags">
+                                <button type="button" data-asset-demo="ECE-METER-001" data-asset-mode="checkout">Available meter</button>
+                                <button type="button" data-asset-demo="ECE-SUPPLY-001" data-asset-mode="checkout">Maintenance example</button>
+                            </div>
+                            <div id="checkoutMessage" class="message" role="status"></div>
+                            <div id="checkoutResult" class="asset-result"></div>
+                        </div>
+
+                        <div id="returnWorkspace" class="workspace-panel hidden">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Returnable assets</p>
+                                    <h2>Return equipment</h2>
+                                    <p class="muted">Anyone authorized may return an asset. The original borrower remains in the audit record.</p>
+                                </div>
+                            </div>
+
+                            <form id="returnLookupForm" class="asset-scan-form">
+                                <label for="returnTagInput">Asset tag</label>
+                                <div class="input-row">
+                                    <input id="returnTagInput" autocomplete="off" spellcheck="false" placeholder="ECE-METER-001">
+                                    <button type="submit" class="button button-primary">Look up asset</button>
+                                </div>
+                            </form>
+                            <div class="demo-cards asset-demo-tags" aria-label="Demo return tags">
+                                <button type="button" data-asset-demo="ECE-METER-001" data-asset-mode="return">Meter 001</button>
+                                <button type="button" data-asset-demo="ECE-SCOPE-001" data-asset-mode="return">Oscilloscope 001</button>
+                            </div>
+                            <div id="returnMessage" class="message" role="status"></div>
+                            <div id="returnResult" class="asset-result"></div>
+                        </div>
                     </section>
 
                     <aside class="audit-card">
