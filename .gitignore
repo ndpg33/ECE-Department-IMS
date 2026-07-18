@@ -6,3 +6,5 @@ data/*.db-shm
 data/*.db-wal
 .vscode/
 .idea/
+
+.pytest_cache/

@@ -1,41 +1,182 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ECE Storeroom IMS</title>
-<style>
-:root{font-family:Inter,system-ui,sans-serif;color:#172033;background:#eef2f7;--blue:#2356a8;--navy:#12233f;--line:#dce3ec;--muted:#667085}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#f8fbff,#eef2f7 48%);min-height:100vh}header{background:var(--navy);color:#fff;border-bottom:4px solid #f1b82d;padding:18px 5vw;display:flex;justify-content:space-between;align-items:center}header h1{margin:3px 0;font-size:1.7rem}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:800;color:#6b7f99;margin:0}.status{font-size:.9rem}.status:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:#47cd89;margin-right:10px}main{padding:34px;max-width:1450px;margin:auto}.hidden{display:none!important}.center{min-height:calc(100vh - 180px);display:grid;place-items:center}.card,.session,.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 18px 50px #17203318}.card{width:min(620px,100%);padding:48px;text-align:center}.card h2{font-size:2.35rem;margin:10px 0}.icon{width:70px;height:70px;border-radius:20px;background:var(--blue);color:#fff;display:grid;place-items:center;margin:0 auto 22px;font-weight:900}.scan{margin-top:28px;text-align:left}.row{display:flex;gap:10px}input{width:100%;min-height:52px;border:1px solid #c8d2df;border-radius:12px;padding:0 16px;font:inherit}button{border:0;border-radius:11px;min-height:46px;padding:0 18px;font:inherit;font-weight:800;cursor:pointer}.primary{background:var(--blue);color:#fff}.ghost{background:#f2f4f7;color:#344054}.danger{background:#fef3f2;color:#b42318;border:1px solid #fecdca}.demo{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}.demo button{min-height:36px;border:1px solid var(--line);background:#f7f9fc}.message{min-height:24px;color:#b42318;font-weight:700}.session{padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.session h2{margin:3px 0}.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.7fr);gap:20px}.panel{padding:28px}.panel h2{margin-top:4px}.search{display:flex;gap:10px;margin:22px 0 14px}.results{display:grid;gap:14px}.item{border:1px solid var(--line);border-radius:15px;padding:18px}.item h3{margin:0 0 4px}.meta{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.pill{background:#f2f4f7;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:750}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{min-height:40px}.audit{max-height:calc(100vh - 150px);overflow:auto;position:sticky;top:20px}.event{padding:12px 0;border-bottom:1px solid #eaecf0}.event strong{display:block;font-size:.84rem}.event span{font-size:.76rem;color:var(--muted)}.muted{color:var(--muted)}.modal{position:fixed;inset:0;background:#0a1628aa;display:grid;place-items:center;padding:20px}.modal .card{width:min(600px,100%)}.location{background:var(--navy);color:#fff;border-radius:16px;padding:28px;font-size:2rem;font-weight:900;margin:18px 0}.success{background:#067647;border-radius:50%}.toast{position:fixed;right:24px;bottom:24px;background:var(--navy);color:#fff;padding:14px 18px;border-radius:12px;font-weight:700}@media(max-width:900px){.layout{grid-template-columns:1fr}.audit{position:static;max-height:none}}@media(max-width:650px){main{padding:18px}.row,.search,.session{flex-direction:column;align-items:stretch}.card{padding:30px}}
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ECE Storeroom IMS</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-<header><div><p class="eyebrow">UMass Dartmouth · Electrical & Computer Engineering</p><h1>Storeroom Inventory Management System</h1></div><div class="status">Terminal online</div></header>
-<main>
-<section id="login" class="center"><div class="card"><div class="icon">ID</div><p class="eyebrow">ECE Storeroom</p><h2>Scan your ID card</h2><p class="muted">Use a demo card identifier to begin.</p><form id="scanForm" class="scan"><label for="cardInput"><b>Card identifier</b></label><div class="row"><input id="cardInput" autocomplete="off" placeholder="CARD-0001"><button class="primary">Begin</button></div></form><div class="demo"><button data-card="CARD-0001">Authorized demo</button><button data-card="CARD-ADMIN">Administrator</button><button data-card="CARD-LOCKED">Denied demo</button></div><p id="loginMessage" class="message"></p></div></section>
-<section id="terminal" class="hidden"><div class="session"><div><p class="eyebrow">Active session</p><h2 id="welcome"></h2><p id="sessionTime" class="muted"></p></div><div class="row"><div><small class="muted">Automatic sign-out</small><br><strong id="timer">01:30</strong></div><button id="endButton" class="danger">End session</button></div></div><div class="layout"><div class="panel"><p class="eyebrow">Inventory lookup</p><h2>Find a component or tool</h2><form id="searchForm" class="search"><input id="searchInput" placeholder="Search name, part number, category, or location"><button class="primary">Search</button></form><p id="summary" class="muted"></p><div id="results" class="results"></div></div><aside class="panel audit"><div class="row" style="justify-content:space-between;align-items:center"><div><p class="eyebrow">Development view</p><h2>Recent event log</h2></div><button id="refresh" class="ghost">Refresh</button></div><p class="muted">This panel is for prototype testing.</p><div id="events"></div></aside></div></section>
-<section id="complete" class="center hidden"><div class="card"><div class="icon success">✓</div><p class="eyebrow">Session complete</p><h2>Thank you</h2><p id="completeText" class="muted"></p><button id="returnButton" class="primary">Return to terminal</button></div></section>
-</main>
-<div id="modal" class="modal hidden"><div class="card"><p class="eyebrow">Item location</p><h2 id="modalTitle"></h2><div id="modalLocation" class="location"></div><p id="modalPart" class="muted"></p><button id="modalClose" class="primary">Done</button></div></div><div id="toast" class="toast hidden"></div>
-<script>
-const $=s=>document.querySelector(s);let session=null;let remaining=90;let timerHandle=null;
-function show(id){['#login','#terminal','#complete'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden')}
-function toast(text){$('#toast').textContent=text;$('#toast').classList.remove('hidden');setTimeout(()=>$('#toast').classList.add('hidden'),2400)}
-async function api(url,options={}){options.headers={...(options.headers||{}),'Content-Type':'application/json'};if(session)options.headers['X-Session-ID']=session.session_id;const r=await fetch(url,options);const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.detail||'Request failed');return data}
-function resetTimer(){remaining=90;renderTimer()}
-function renderTimer(){const m=String(Math.floor(remaining/60)).padStart(2,'0'),s=String(remaining%60).padStart(2,'0');$('#timer').textContent=`${m}:${s}`}
-function startTimer(){clearInterval(timerHandle);resetTimer();timerHandle=setInterval(()=>{remaining--;renderTimer();if(remaining<=0)endSession('INACTIVITY_TIMEOUT')},1000)}
-['click','keydown','touchstart'].forEach(e=>document.addEventListener(e,()=>{if(session)resetTimer()},{passive:true}))
-async function scan(card){$('#loginMessage').textContent='';try{session=await api('/api/auth/card',{method:'POST',body:JSON.stringify({card_identifier:card})});$('#welcome').textContent=`Welcome, ${session.user.display_name}`;$('#sessionTime').textContent=`Session started ${new Date(session.started_at).toLocaleTimeString()}`;show('#terminal');startTimer();await search('');await loadEvents()}catch(e){$('#loginMessage').textContent=e.message}}
-$('#scanForm').addEventListener('submit',e=>{e.preventDefault();scan($('#cardInput').value)});document.querySelectorAll('[data-card]').forEach(b=>b.onclick=()=>{ $('#cardInput').value=b.dataset.card;scan(b.dataset.card)})
-async function search(q){try{const data=await api('/api/items?q='+encodeURIComponent(q));$('#summary').textContent=`${data.items.length} item${data.items.length===1?'':'s'} found`;$('#results').innerHTML=data.items.map(i=>`<article class="item"><h3>${i.name}</h3><div class="muted">${i.part_number}</div><p>${i.description}</p><div class="meta"><span class="pill">${i.category}</span><span class="pill">${i.inventory_type}</span><span class="pill">Stock: ${i.stock_status}</span></div><p><b>${i.location}</b></p><div class="actions"><button class="primary" onclick="viewItem(${i.id})">Show location</button>${i.inventory_type==='consumable'?`<button class="ghost" onclick="recordUsage(${i.id})">Record probable usage</button>`:'<button class="ghost" disabled>Checkout coming next</button>'}</div></article>`).join('')||'<p class="muted">No matching inventory items.</p>'}catch(e){toast(e.message)}}
-$('#searchForm').addEventListener('submit',e=>{e.preventDefault();search($('#searchInput').value)});
-window.viewItem=async id=>{try{const d=await api(`/api/items/${id}/view`,{method:'POST'});$('#modalTitle').textContent=d.item.name;$('#modalLocation').textContent=d.item.location;$('#modalPart').textContent=d.item.part_number;$('#modal').classList.remove('hidden');await loadEvents()}catch(e){toast(e.message)}};
-window.recordUsage=async id=>{try{await api(`/api/items/${id}/probable-usage`,{method:'POST'});toast('Probable usage recorded');await loadEvents()}catch(e){toast(e.message)}};
-$('#modalClose').onclick=()=>$('#modal').classList.add('hidden');
-async function loadEvents(){try{const d=await api('/api/events/recent?limit=30');$('#events').innerHTML=d.events.map(e=>`<div class="event"><strong>${e.event_type.replaceAll('_',' ')}</strong><span>${new Date(e.timestamp).toLocaleString()}${e.display_name?' · '+e.display_name:''}${e.item_name?' · '+e.item_name:''}</span></div>`).join('')}catch(e){$('#events').innerHTML='<p class="muted">Unable to load events.</p>'}}
-$('#refresh').onclick=loadEvents;
-async function endSession(reason='USER_SIGN_OUT'){if(!session)return;try{const d=await api(`/api/sessions/${session.session_id}/end`,{method:'POST',body:JSON.stringify({ending_reason:reason})});clearInterval(timerHandle);$('#completeText').textContent=`Locations viewed: ${d.summary.locations_viewed} · Probable usage records: ${d.summary.probable_usage_records}`;session=null;show('#complete')}catch(e){toast(e.message)}}
-$('#endButton').onclick=()=>endSession();$('#returnButton').onclick=()=>{ $('#cardInput').value='';show('#login');$('#cardInput').focus()};
-</script>
+    <div class="app-shell">
+        <header class="site-header">
+            <div>
+                <p class="eyebrow">UMass Dartmouth · ECE</p>
+                <h1>Storeroom IMS</h1>
+            </div>
+            <div id="systemStatus" class="system-status"><span></span> Terminal online</div>
+        </header>
+
+        <main>
+            <section id="idleScreen" class="screen screen-centered">
+                <div class="hero-card">
+                    <div class="card-symbol" aria-hidden="true">ID</div>
+                    <p class="eyebrow">Terminal ready</p>
+                    <h2>Scan your ID card to begin</h2>
+                    <p class="muted">For Phase 1, enter a mock card identifier and press Enter.</p>
+
+                    <form id="scanForm" class="scan-form">
+                        <label for="cardInput">Mock card identifier</label>
+                        <div class="input-row">
+                            <input id="cardInput" name="card_identifier" autocomplete="off" autofocus placeholder="CARD-0001">
+                            <button type="submit" class="button button-primary">Scan</button>
+                        </div>
+                    </form>
+
+                    <div class="demo-cards">
+                        <button type="button" data-card="CARD-0001">Authorized demo</button>
+                        <button type="button" data-card="CARD-ADMIN">Administrator</button>
+                        <button type="button" data-card="CARD-LOCKED">Denied demo</button>
+                    </div>
+                    <p id="scanMessage" class="message" role="status"></p>
+                </div>
+            </section>
+
+            <section id="terminalScreen" class="screen hidden">
+                <div class="session-bar">
+                    <div>
+                        <p class="eyebrow">Active session</p>
+                        <h2 id="welcomeName">Welcome</h2>
+                        <p id="sessionMeta" class="muted"></p>
+                    </div>
+                    <div class="session-actions">
+                        <div class="timeout-box">
+                            <span>Automatic sign-out</span>
+                            <strong id="timeoutDisplay">1:30</strong>
+                        </div>
+                        <button id="endSessionButton" class="button button-danger">End session</button>
+                    </div>
+                </div>
+
+                <nav class="workspace-tabs" aria-label="Terminal actions">
+                    <button class="workspace-tab active" type="button" data-workspace="inventory">
+                        <span class="tab-number">1</span>
+                        Search inventory
+                    </button>
+                    <button class="workspace-tab" type="button" data-workspace="checkout">
+                        <span class="tab-number">2</span>
+                        Check out equipment
+                    </button>
+                    <button class="workspace-tab" type="button" data-workspace="return">
+                        <span class="tab-number">3</span>
+                        Return equipment
+                    </button>
+                </nav>
+
+                <div class="terminal-grid">
+                    <section class="workspace-card">
+                        <div id="inventoryWorkspace" class="workspace-panel">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Inventory lookup</p>
+                                    <h2>Find a part or piece of equipment</h2>
+                                </div>
+                            </div>
+
+                            <form id="searchForm" class="search-form">
+                                <input id="searchInput" autocomplete="off" placeholder="Search 10k resistor, Arduino, multimeter, Shelf B…">
+                                <button type="submit" class="button button-primary">Search</button>
+                            </form>
+
+                            <div id="searchSummary" class="search-summary"></div>
+                            <div id="results" class="results"></div>
+                        </div>
+
+                        <div id="checkoutWorkspace" class="workspace-panel hidden">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Returnable assets</p>
+                                    <h2>Check out equipment</h2>
+                                    <p class="muted">Scan the unique tag attached to the physical asset.</p>
+                                </div>
+                            </div>
+
+                            <form id="checkoutLookupForm" class="asset-scan-form">
+                                <label for="checkoutTagInput">Asset tag</label>
+                                <div class="input-row">
+                                    <input id="checkoutTagInput" autocomplete="off" spellcheck="false" placeholder="ECE-METER-001">
+                                    <button type="submit" class="button button-primary">Look up asset</button>
+                                </div>
+                            </form>
+                            <div class="demo-cards asset-demo-tags" aria-label="Demo checkout tags">
+                                <button type="button" data-asset-demo="ECE-METER-001" data-asset-mode="checkout">Available meter</button>
+                                <button type="button" data-asset-demo="ECE-SUPPLY-001" data-asset-mode="checkout">Maintenance example</button>
+                            </div>
+                            <div id="checkoutMessage" class="message" role="status"></div>
+                            <div id="checkoutResult" class="asset-result"></div>
+                        </div>
+
+                        <div id="returnWorkspace" class="workspace-panel hidden">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Returnable assets</p>
+                                    <h2>Return equipment</h2>
+                                    <p class="muted">Anyone authorized may return an asset. The original borrower remains in the audit record.</p>
+                                </div>
+                            </div>
+
+                            <form id="returnLookupForm" class="asset-scan-form">
+                                <label for="returnTagInput">Asset tag</label>
+                                <div class="input-row">
+                                    <input id="returnTagInput" autocomplete="off" spellcheck="false" placeholder="ECE-METER-001">
+                                    <button type="submit" class="button button-primary">Look up asset</button>
+                                </div>
+                            </form>
+                            <div class="demo-cards asset-demo-tags" aria-label="Demo return tags">
+                                <button type="button" data-asset-demo="ECE-METER-001" data-asset-mode="return">Meter 001</button>
+                                <button type="button" data-asset-demo="ECE-SCOPE-001" data-asset-mode="return">Oscilloscope 001</button>
+                            </div>
+                            <div id="returnMessage" class="message" role="status"></div>
+                            <div id="returnResult" class="asset-result"></div>
+                        </div>
+                    </section>
+
+                    <aside class="audit-card">
+                        <div class="section-heading compact">
+                            <div>
+                                <p class="eyebrow">Development view</p>
+                                <h2>Recent event log</h2>
+                            </div>
+                            <button id="refreshEventsButton" class="button button-ghost">Refresh</button>
+                        </div>
+                        <p class="dev-warning">This panel is for prototype testing and would not be visible to normal users.</p>
+                        <div id="events" class="event-list"></div>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="completeScreen" class="screen screen-centered hidden">
+                <div class="hero-card compact-card">
+                    <div class="success-symbol" aria-hidden="true">✓</div>
+                    <p class="eyebrow">Session complete</p>
+                    <h2>Thank you</h2>
+                    <p id="sessionSummary" class="muted"></p>
+                    <button id="returnButton" class="button button-primary">Return to terminal</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="locationModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="locationTitle">
+        <div class="modal-card">
+            <p class="eyebrow">Item location</p>
+            <h2 id="locationTitle"></h2>
+            <div id="locationText" class="location-display"></div>
+            <p id="locationPart" class="muted"></p>
+            <button id="closeLocationButton" class="button button-primary">Done</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+    <script src="/static/app.js" defer></script>
 </body>
 </html>
