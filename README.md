@@ -1,44 +1,30 @@
-# ECE Storeroom IMS — Phase 1.1 Backend
+# ECE Storeroom IMS — Phase 1.1 Terminal
 
-This project is the first end-to-end terminal prototype for the ECE Storeroom Inventory Management System. Phase 1.1 adds the backend foundation for individually tracked returnable assets while preserving the working Phase 1 terminal interface.
+This project is an end-to-end terminal prototype for the ECE Storeroom Inventory Management System. Phase 1.1 supports both approximate consumable usage and exact checkout/return tracking for individually tagged equipment.
 
 ## What currently works
 
-### Phase 1 terminal
-
-- Mock ID-card scanning
-- Authorized and denied users
-- Storeroom session creation
+- Mock ID-card scanning with authorized and denied users
+- Storeroom session creation and 90-second inactivity logout
 - Inventory search by name, part number, description, category, or location
 - Large item-location display
 - Probable-usage logging for consumables
-- Automatic logout after 90 seconds of inactivity
-- Manual sign-out and session summary
-- SQLite audit/event log
-- FastAPI interactive API documentation
-
-### Phase 1.1 asset backend
-
 - Individually tagged returnable assets
-- Asset lookup by tag
-- Transactional checkout and return operations
+- Asset lookup, checkout, and return terminal screens
 - Exact borrower and checkout-time tracking
-- Duplicate-checkout prevention
-- Maintenance, missing, and retired status protection
+- Duplicate-checkout and invalid-status protection
 - Cross-user returns with the original borrower preserved in the audit record
-- Asset references in the event log
-- Session summaries containing checkout and return totals
-- Automatic upgrade of an existing Phase 1 SQLite database
-- Automated backend and API tests
-
-The terminal checkout and return screens are intentionally not enabled yet. The backend is being proven first so database, API, and interface problems can be debugged separately.
+- Session summaries with consumable, checkout, and return activity
+- SQLite audit/event logging
+- Migration of an existing Phase 1 database without deleting its records
+- Automated backend, migration, API, and terminal-interface tests
 
 ## Windows setup
 
 1. Install **Python 3.10 or newer** and select **Add Python to PATH** during installation.
-2. Extract or clone this project to a normal folder.
+2. Clone or extract the project to a normal folder.
 3. Double-click `run.bat`.
-4. The script creates a virtual environment, installs FastAPI, starts the server, and opens the terminal in your browser.
+4. The script creates a virtual environment, installs the required packages, starts the server, and opens the terminal in your browser.
 5. Stop the server with **Ctrl+C** in the command window.
 
 The first installation needs internet access to download Python packages.
@@ -62,6 +48,16 @@ The on-screen demo buttons enter these values automatically.
 | `ECE-SUPPLY-001` | Bench Power Supply | Maintenance |
 
 Asset tags are normalized to uppercase and matched case-insensitively.
+
+## Phase 1.1 terminal workflow
+
+The terminal includes three session workspaces:
+
+1. **Search inventory** for consumables and general item locations.
+2. **Check out equipment** by scanning an individual asset tag and confirming an available asset.
+3. **Return equipment** by scanning an asset tag and confirming a currently checked-out asset.
+
+For an end-to-end demo, sign in with `CARD-0001`, check out `ECE-METER-001`, return the same asset, and end the session. The session summary and development event log will show both actions.
 
 ## Developer commands
 
@@ -92,15 +88,21 @@ python -m pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
-The current suite verifies:
+The suite verifies:
 
 - Idempotent asset seeding
 - Checkout and return state changes
 - Duplicate-checkout rejection
 - Maintenance lockout
 - Cross-user returns
-- Migration of an existing Phase 1 event table
+- Upgrade of a complete Phase 1 database
+- Preservation of existing Phase 1 users, sessions, items, and events
+- Session creation after a Phase 1 database upgrade
 - Full API checkout and return flow
+- The original consumable search, location, and probable-usage workflow
+- Presence of checkout and return controls in the terminal interface
+
+GitHub Actions also runs the test suite automatically for pushes and pull requests involving `main`.
 
 ## Asset API
 
@@ -112,19 +114,21 @@ POST /api/assets/{asset_tag}/checkout
 POST /api/assets/{asset_tag}/return
 ```
 
-The easiest way to test these before the UI is added is through the interactive documentation at `/docs`:
-
-1. Call `POST /api/auth/scan` with `CARD-0001`.
-2. Copy the returned `session_id`.
-3. Open an asset endpoint.
-4. Enter that value into the `X-Session-ID` field.
-5. Use `ECE-METER-001` as the asset tag.
+The interactive documentation at `/docs` can be used to exercise the endpoints directly.
 
 ## Database upgrade behavior
 
-The SQLite database is created automatically at `data/ims.db`. When a Phase 1 database already exists, startup adds the new `assets` table and the `events.asset_id` column without deleting existing users, sessions, items, or events.
+The SQLite database is created automatically at `data/ims.db`.
 
-Double-click `reset_database.bat` only when you intentionally want to delete the local prototype database and restore all demo data.
+When a Phase 1 database already exists, startup performs repeatable migrations that:
+
+- Add the `assets` table
+- Add `events.asset_id`
+- Add `sessions.terminal_id`
+- Assign existing sessions to the development terminal
+- Preserve existing users, cards, sessions, items, and events
+
+Double-click `reset_database.bat` only when you intentionally want to delete the local prototype database and restore the demo data.
 
 ## Asset states
 
@@ -140,19 +144,9 @@ Only an `AVAILABLE` asset can be checked out. Only a `CHECKED_OUT` asset can be 
 
 ## Important prototype limitations
 
-- Mock card identifiers are not secure authentication.
+- Mock card identifiers are not secure production authentication.
 - The development event-log endpoint is visible without administrator authentication.
-- The app is designed for one local development terminal.
-- Stock quantities are seeded demo values and are not yet connected to load cells.
-- The checkout and return terminal screens are not yet implemented.
-- Administrative asset editing and status management are not yet implemented.
-
-## Phase 1.1 terminal workflow
-
-The terminal now includes three session workspaces:
-
-1. **Search inventory** for consumables and general item locations.
-2. **Check out equipment** by scanning an individual asset tag and confirming an available asset.
-3. **Return equipment** by scanning an asset tag and confirming a currently checked-out asset.
-
-For an end-to-end demo, sign in with `CARD-0001`, check out `ECE-METER-001`, switch to the return workspace, return the same tag, and end the session. The session summary and development event log will show both actions.
+- The application is currently designed for one local development terminal.
+- Stock quantities are seeded demo values and are not connected to load cells yet.
+- Administrative inventory editing, asset status management, and purchasing tools are not implemented yet.
+- A production multi-terminal deployment should use a central server and production database rather than one local SQLite file.

@@ -160,33 +160,136 @@ def test_another_authorized_user_can_return_asset(isolated_database):
         assert details["returned_by_original_borrower"] is False
 
 
-def test_existing_phase1_events_table_is_migrated(tmp_path, monkeypatch):
-    database_path = tmp_path / "phase1.db"
+def create_phase1_database(database_path):
+    """Create the complete schema used by the published Phase 1 terminal."""
     with sqlite3.connect(database_path) as connection:
-        connection.execute(
+        connection.executescript(
             """
-            CREATE TABLE events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id TEXT,
-                user_id INTEGER,
-                event_type TEXT NOT NULL,
-                item_id INTEGER,
-                timestamp TEXT NOT NULL,
-                details TEXT NOT NULL DEFAULT '{}'
-            )
+            CREATE TABLE users(
+              id INTEGER PRIMARY KEY, display_name TEXT NOT NULL,
+              university_identifier TEXT UNIQUE, authorized INTEGER NOT NULL,
+              role TEXT NOT NULL);
+            CREATE TABLE cards(
+              id INTEGER PRIMARY KEY, card_identifier TEXT UNIQUE NOT NULL,
+              user_id INTEGER NOT NULL, active INTEGER NOT NULL,
+              FOREIGN KEY(user_id) REFERENCES users(id));
+            CREATE TABLE sessions(
+              id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, started_at TEXT NOT NULL,
+              ended_at TEXT, ending_reason TEXT,
+              FOREIGN KEY(user_id) REFERENCES users(id));
+            CREATE TABLE items(
+              id INTEGER PRIMARY KEY, part_number TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+              description TEXT NOT NULL, category TEXT NOT NULL,
+              inventory_type TEXT NOT NULL, location TEXT NOT NULL,
+              estimated_quantity REAL, low_stock_threshold REAL, unit TEXT NOT NULL,
+              active INTEGER NOT NULL DEFAULT 1);
+            CREATE TABLE events(
+              id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, user_id INTEGER,
+              event_type TEXT NOT NULL, item_id INTEGER, timestamp TEXT NOT NULL,
+              details TEXT NOT NULL DEFAULT '{}');
             """
         )
+        connection.execute(
+            "INSERT INTO users VALUES (?, ?, ?, ?, ?)",
+            (41, "Legacy Phase 1 User", "LEGACY-1001", 1, "student"),
+        )
+        connection.execute(
+            "INSERT INTO cards VALUES (?, ?, ?, ?)",
+            (51, "CARD-LEGACY", 41, 1),
+        )
+        connection.execute(
+            "INSERT INTO sessions VALUES (?, ?, ?, ?, ?)",
+            (
+                "legacy-session",
+                41,
+                "2026-07-01T12:00:00+00:00",
+                "2026-07-01T12:05:00+00:00",
+                "USER_SIGN_OUT",
+            ),
+        )
+        connection.execute(
+            "INSERT INTO items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                61,
+                "LEGACY-CAP-001",
+                "Legacy Capacitor",
+                "Existing Phase 1 inventory record",
+                "Capacitors",
+                "consumable",
+                "Legacy Shelf",
+                12,
+                5,
+                "pieces",
+                1,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO events(
+                session_id, user_id, event_type, item_id, timestamp, details
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "legacy-session",
+                41,
+                "ITEM_LOCATION_VIEWED",
+                61,
+                "2026-07-01T12:02:00+00:00",
+                '{"location":"Legacy Shelf"}',
+            ),
+        )
 
+
+def test_complete_phase1_database_migrates_and_can_start_a_session(
+    tmp_path, monkeypatch
+):
+    from fastapi.testclient import TestClient
+
+    database_path = tmp_path / "phase1.db"
+    create_phase1_database(database_path)
     monkeypatch.setattr(app, "DB_PATH", database_path)
+
     app.initialize_database()
 
     with app.get_db() as connection:
-        columns = {
+        session_columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(sessions)").fetchall()
+        }
+        event_columns = {
             row["name"]
             for row in connection.execute("PRAGMA table_info(events)").fetchall()
         }
+        legacy_session = connection.execute(
+            "SELECT * FROM sessions WHERE id = 'legacy-session'"
+        ).fetchone()
+        legacy_item = connection.execute(
+            "SELECT * FROM items WHERE part_number = 'LEGACY-CAP-001'"
+        ).fetchone()
+        legacy_event = connection.execute(
+            "SELECT * FROM events WHERE session_id = 'legacy-session'"
+        ).fetchone()
 
-    assert "asset_id" in columns
+        assert "terminal_id" in session_columns
+        assert "asset_id" in event_columns
+        assert legacy_session["terminal_id"] == app.TERMINAL_ID
+        assert legacy_item["name"] == "Legacy Capacitor"
+        assert json.loads(legacy_event["details"])["location"] == "Legacy Shelf"
+        assert connection.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 4
+
+    with TestClient(app.app) as client:
+        response = client.post(
+            "/api/auth/scan", json={"card_identifier": "CARD-LEGACY"}
+        )
+
+    assert response.status_code == 200
+    new_session_id = response.json()["session_id"]
+    with app.get_db() as connection:
+        new_session = connection.execute(
+            "SELECT terminal_id FROM sessions WHERE id = ?",
+            (new_session_id,),
+        ).fetchone()
+        assert new_session["terminal_id"] == app.TERMINAL_ID
 
 
 def test_asset_api_checkout_and_return_flow(tmp_path, monkeypatch):
@@ -231,6 +334,50 @@ def test_asset_api_checkout_and_return_flow(tmp_path, monkeypatch):
         assert end_response.status_code == 200
         assert end_response.json()["summary"]["assets_checked_out"] == 1
         assert end_response.json()["summary"]["assets_returned"] == 1
+
+
+def test_original_consumable_workflow_still_works(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    database_path = tmp_path / "ims-consumable-test.db"
+    monkeypatch.setattr(app, "DB_PATH", database_path)
+
+    with TestClient(app.app) as client:
+        auth_response = client.post(
+            "/api/auth/scan", json={"card_identifier": "CARD-0001"}
+        )
+        assert auth_response.status_code == 200
+        session_id = auth_response.json()["session_id"]
+        headers = {"X-Session-ID": session_id}
+
+        search_response = client.get("/api/items?q=10k", headers=headers)
+        assert search_response.status_code == 200
+        matching_items = search_response.json()["items"]
+        assert len(matching_items) == 1
+        item = matching_items[0]
+        assert item["part_number"] == "RES-10K-025W"
+
+        view_response = client.post(
+            f"/api/items/{item['id']}/view", headers=headers
+        )
+        assert view_response.status_code == 200
+        assert view_response.json()["item"]["location"] == (
+            "Shelf B · Cabinet 3 · Bin 12"
+        )
+
+        usage_response = client.post(
+            f"/api/items/{item['id']}/probable-usage", headers=headers
+        )
+        assert usage_response.status_code == 200
+
+        end_response = client.post(
+            f"/api/sessions/{session_id}/end",
+            json={"ending_reason": "USER_SIGN_OUT"},
+        )
+        assert end_response.status_code == 200
+        summary = end_response.json()["summary"]
+        assert summary["locations_viewed"] == 1
+        assert summary["probable_usage_records"] == 1
 
 
 def test_terminal_ui_exposes_asset_checkout_and_return_controls(

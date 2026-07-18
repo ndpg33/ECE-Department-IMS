@@ -168,7 +168,15 @@ def initialize_database() -> None:
             """
         )
 
-        # Phase 1 databases already have events but not its asset reference.
+        # Phase 1 databases already have these tables, but not the Phase 1.1
+        # columns. SQLite's CREATE TABLE IF NOT EXISTS does not alter an
+        # existing table, so apply small, repeatable migrations explicitly.
+        ensure_column(
+            connection,
+            "sessions",
+            "terminal_id",
+            "INTEGER REFERENCES terminals(id)",
+        )
         ensure_column(connection, "events", "asset_id", "INTEGER REFERENCES assets(id)")
 
         connection.executescript(
@@ -187,6 +195,13 @@ def initialize_database() -> None:
         connection.execute(
             "INSERT OR IGNORE INTO terminals (id, name, location) VALUES (?, ?, ?)",
             (TERMINAL_ID, "Development Terminal", "ECE Storeroom Prototype"),
+        )
+        # Preserve old sessions while assigning them to the development
+        # terminal introduced in Phase 1.1. New sessions always provide this
+        # value explicitly.
+        connection.execute(
+            "UPDATE sessions SET terminal_id = ? WHERE terminal_id IS NULL",
+            (TERMINAL_ID,),
         )
 
         if connection.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
